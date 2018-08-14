@@ -238,3 +238,129 @@ class RedBlackTree:
 
     def __iter__(self):
         return self.root.__iter__()
+
+    def _get(self, key, curr_node):
+        if not curr_node:
+            return None
+        elif key == curr_node.key:
+            return curr_node
+        elif key < curr_node.key:
+            return self._get(key, curr_node.left)
+        else:
+            return self._get(key, curr_node.right)
+
+    def get(self, key):
+        if self.root:
+            res = self._get(key, self.root)
+            if res:
+                return res.payload
+            else:
+                return None
+        else:
+            return None
+
+    def _delete(self, node):
+        if node.has_leaf():
+            if node.is_left_knot():
+                node.parent.left = None
+            else:
+                node.parent.right = None
+        elif node.has_both_children():
+            succ = node.find_successor()
+            succ.splice_out()
+            node.key = succ.key
+            node.payload = succ.payload
+            self._fix_delete(succ.parent)
+        else:
+            if node.has_any_children():
+                if node.has_left_child():
+                    if node.is_left_knot():
+                        node.parent.left = node.left
+                        node.left.parent = node.parent
+                        self._fix_delete(node.parent)
+                    elif node.is_right_knot():
+                        node.parent.right = node.left
+                        node.left.parent = node.parent
+                        self._fix_delete(node.parent)
+                    else:
+                        node.replace_node_date(node.left.key,
+                                               node.left.payload,
+                                               node.left.left,
+                                               node.left.right)
+                        self._fix_delete(node)
+                else:
+                    if node.is_left_knot():
+                        node.parent.left = node.right
+                        node.right.parent = node.parent
+                        self._fix_delete(node.parent)
+                    elif node.is_right_knot():
+                        node.parent.right = node.right
+                        node.right.parent = node.parent
+                        self._fix_delete(node.parent)
+                    else:
+                        node.replace_node_date(node.right.key,
+                                               node.right.payload,
+                                               node.right.left,
+                                               node.right.right)
+                        self._fix_delete(node)
+
+    def delete(self, key):
+        if self.size > 1:
+            remove_node = self._get(key, self.root)
+            if remove_node:
+                self._delete(remove_node)
+                self.size -= 1
+            else:
+                raise KeyError('key not in tree.')
+        elif self.size == 1 and self.root.key == key:
+            self.root = None
+            self.size -= 1
+        else:
+            raise ValueError('tree is empty.')
+
+    def __delitem__(self, key):
+        self.delete(key)
+
+    def _fix_delete(self, node):
+        while not node.is_root() and node.color == 'Black':
+            if node.is_left_knot():
+                if node.has_right_brother():
+                    brother = node.parent.right
+                    if brother.color == 'Red':
+                        brother.color = 'Black'
+                        node.parent.color = 'Red'
+                        self._left_rotate(node.parent)
+                    if brother.has_both_children():
+                        if brother.right.color == 'Black':
+                            if brother.left.color == 'Black':
+                                brother.color = 'Red'
+                            else:
+                                brother.left.color = 'Black'
+                                brother.color = 'Red'
+                                self._right_rotate(brother)
+                            brother.color = node.parent.color
+                            node.parent.color = 'Black'
+                            self._left_rotate(node.parent)
+                node = self.root
+            else:
+                if node.has_left_brother():
+                    brother = node.parent.left
+                    if brother.color == 'Red':
+                        brother.color = 'Black'
+                        node.parent.color = 'Red'
+                        self._right_rotate(node.parent)
+                    if brother.has_both_children():
+                        if brother.left.color == 'Black':
+                            if brother.right.color == 'Black':
+                                brother.color = 'Red'
+                            else:
+                                brother.right.color = 'Black'
+                                brother.color = 'Red'
+                                self._right_rotate(brother)
+                            brother.color = node.parent.color
+                            node.parent.color = 'Black'
+                            self._right_rotate(node.parent)
+                node = self.root
+
+    def __getitem__(self, key):
+        return self.get(key)
