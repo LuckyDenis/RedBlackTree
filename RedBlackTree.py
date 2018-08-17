@@ -155,10 +155,12 @@ class NodeTree(object):
             self.parent.color = color
 
     def has_left_brother(self):
-        return self.parent and self.parent.left != self
+        if self.parent:
+            return self.parent.left != self and self.parent.left is not None
 
     def has_right_brother(self):
-        return self.parent and self.parent.right != self
+        if self.parent:
+            return self.parent.right != self and self.parent.right is not None
 
     def get_brother_color(self):
         if self.has_right_brother():
@@ -379,7 +381,7 @@ class RedBlackTree(object):
             self.root = None
             self.size -= 1
         else:
-            raise ValueError('tree is empty.')
+            raise KeyError('tree is empty.')
 
     def _fix_delete(self, node):
         while not node.is_root() and node.color == 'Black':
@@ -429,6 +431,13 @@ class RedBlackTree(object):
                         node.parent.color = 'Black'
                         self._right_rotate(node.parent)
                 node = self.root
+
+    def clear_tree(self):
+        self.root = None
+        self.size = 0
+
+    def __len__(self):
+        return self.size
 
     def __getitem__(self, key):
         return self.get(key)
